@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tập Gõ Chữ: V5</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .game-container {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 600px;
+            border: 5px solid #00bfff;
+            background-color: #2e2e4a;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+            overflow: hidden;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-height: 80vh;
+            margin-top: 20px;
+        }
+
+        .falling-char {
+            position: absolute;
+            font-size: 3em;
+            font-weight: bold;
+            color: #ffcc00;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            user-select: none;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 50%;
+            background-color: rgba(255, 204, 0, 0.2);
+            transition: background-color 0.1s ease-out;
+            text-transform: uppercase;
+        }
+        
+        .falling-char.correct {
+            animation: pulse 0.5s ease-in-out;
+            color: #32cd32;
+        }
+
+        .correct-char-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em;
+            color: #32cd32;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            letter-spacing: 5px;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .word-info {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.8;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .word-info .emoji {
+            font-size: 5em;
+            margin-bottom: 10px;
+        }
+
+        .word-info .vietnamese {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-start {
+            background-image: linear-gradient(to right, #00bfff, #0073e6);
+            color: white;
+        }
+
+        .btn-reset {
+            background-image: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #score-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f7b731;
+            margin-top: 20px;
+        }
+        
+        #progress-display {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .main-menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: firework-burst 1s forwards;
+            z-index: 100;
+        }
+        
+        #end-game-message {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes firework-burst {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Thêm các điều chỉnh cho các thiết bị nhỏ hơn */
+        @media (max-width: 768px) {
+            .game-container {
+                height: 50vh;
+                max-width: 95%; 
+            }
+            .word-info .emoji {
+                font-size: 3em;
+            }
+            .word-info .vietnamese {
+                font-size: 1.2em;
+            }
+            .falling-char {
+                font-size: 2em;
+            }
+            .correct-char-display {
+                font-size: 1.5em;
+            }
+            .btn {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- Menu chính sẽ được hiển thị khi game không chạy -->
+        <div id="main-menu" class="main-menu">
+            <h1>Game Gõ Từ Vựng</h1>
+            <p>Chạm vào các chữ cái để tạo thành từ!</p>
+            <p>Bấm Bắt đầu để chơi</p>
+        </div>
+        <!-- Thông báo kết thúc game -->
+        <div id="end-game-message" style="display: none;">
+            Chúc mừng! Bạn đã hoàn thành tất cả các từ!
+        </div>
+        
+        <!-- Hiển thị emoji và nghĩa tiếng Việt -->
+        <div id="word-info" class="word-info">
+            <span id="word-emoji" class="emoji"></span>
+            <span id="word-vietnamese" class="vietnamese"></span>
+        </div>
+        
+        <!-- Chữ rơi sẽ được thêm vào đây bằng JS -->
+        <div id="correct-char-display" class="correct-char-display"></div>
+    </div>
+
+    <div class="game-info">
+        <h2 id="current-word">Sẵn sàng!</h2>
+        <h2 id="score-display">Từ hoàn thành: 0</h2>
+        <h2 id="progress-display">Tiến độ: 0 / 0</h2>
+    </div>
+
+    <div class="controls">
+        <button id="start-btn" class="btn btn-start">Bắt đầu</button>
+        <button id="reset-btn" class="btn btn-reset">Chơi lại</button>
+    </div>
+    
+    <script>
+        // Danh sách các từ vựng với nghĩa tiếng Việt và emoji
+        const wordCategories = {
+            colors: [
+                { english: "red", vietnamese: "màu đỏ", emoji: "🔴" },
+                { english: "blue", vietnamese: "màu xanh dương", emoji: "🔵" },
+                { english: "yellow", vietnamese: "màu vàng", emoji: "🟡" },
+                { english: "green", vietnamese: "màu xanh lá", emoji: "🟢" },
+                { english: "black", vietnamese: "màu đen", emoji: "⚫" },
+                { english: "white", vietnamese: "màu trắng", emoji: "⚪" },
+                { english: "pink", vietnamese: "màu hồng", emoji: "🩷" },
+                { english: "brown", vietnamese: "màu nâu", emoji: "🟤" },
+                { english: "orange", vietnamese: "màu cam", emoji: "🟠" },
+                { english: "purple", vietnamese: "màu tím", emoji: "🟣" },
+                { english: "grey", vietnamese: "màu xám", emoji: "🔘" },
+                { english: "gray", vietnamese: "màu xám", emoji: "🔘" },
+                { english: "light blue", vietnamese: "màu xanh da trời", emoji: "💙" },
+                { english: "dark green", vietnamese: "màu xanh lá đậm", emoji: "💚" }
+            ],
+            numbers: [
+                { english: "one", vietnamese: "số một", emoji: "1️⃣" },
+                { english: "two", vietnamese: "số hai", emoji: "2️⃣" },
+                { english: "three", vietnamese: "số ba", emoji: "3️⃣" },
+                { english: "four", vietnamese: "số bốn", emoji: "4️⃣" },
+                { english: "five", vietnamese: "số năm", emoji: "5️⃣" },
+                { english: "six", vietnamese: "số sáu", emoji: "6️⃣" },
+                { english: "seven", vietnamese: "số bảy", emoji: "7️⃣" },
+                { english: "eight", vietnamese: "số tám", emoji: "8️⃣" },
+                { english: "nine", vietnamese: "số chín", emoji: "9️⃣" },
+                { english: "ten", vietnamese: "số mười", emoji: "🔟" },
+                { english: "eleven", vietnamese: "số mười một", emoji: "🔢" },
+                { english: "twelve", vietnamese: "số mười hai", emoji: "🔢" },
+                { english: "thirteen", vietnamese: "số mười ba", emoji: "🔢" },
+                { english: "fourteen", vietnamese: "số mười bốn", emoji: "🔢" },
+                { english: "fifteen", vietnamese: "số mười lăm", emoji: "🔢" },
+                { english: "sixteen", vietnamese: "số mười sáu", emoji: "🔢" },
+                { english: "seventeen", vietnamese: "số mười bảy", emoji: "🔢" },
+                { english: "eighteen", vietnamese: "số mười tám", emoji: "🔢" },
+                { english: "nineteen", vietnamese: "số mười chín", emoji: "🔢" },
+                { english: "twenty", vietnamese: "số hai mươi", emoji: "🔢" }
+            ],
+            animals: [
+                { english: "dog", vietnamese: "con chó", emoji: "🐶" },
+                { english: "cat", vietnamese: "con mèo", emoji: "🐱" },
+                { english: "bird", vietnamese: "con chim", emoji: "🐦" },
+                { english: "fish", vietnamese: "con cá", emoji: "🐟" },
+                { english: "duck", vietnamese: "con vịt", emoji: "🦆" },
+                { english: "chicken", vietnamese: "con gà", emoji: "🐔" },
+                { english: "cow", vietnamese: "con bò", emoji: "🐮" },
+                { english: "pig", vietnamese: "con lợn", emoji: "🐷" },
+                { english: "horse", vietnamese: "con ngựa", emoji: "🐴" },
+                { english: "sheep", vietnamese: "con cừu", emoji: "🐑" },
+                { english: "lion", vietnamese: "con sư tử", emoji: "🦁" },
+                { english: "tiger", vietnamese: "con hổ", emoji: "🐯" },
+                { english: "elephant", vietnamese: "con voi", emoji: "🐘" },
+                { english: "monkey", vietnamese: "con khỉ", emoji: "🐵" },
+                { english: "bear", vietnamese: "con gấu", emoji: "🐻" }
+            ],
+            schoolSupplies: [
+                { english: "book", vietnamese: "sách", emoji: "📚" },
+                { english: "pen", vietnamese: "bút mực", emoji: "🖋️" },
+                { english: "pencil", vietnamese: "bút chì", emoji: "✏️" },
+                { english: "eraser", vietnamese: "cục tẩy", emoji: "🧼" },
+                { english: "ruler", vietnamese: "thước kẻ", emoji: "📏" },
+                { english: "bag", vietnamese: "túi xách", emoji: "👜" },
+                { english: "schoolbag", vietnamese: "cặp sách", emoji: "🎒" },
+                { english: "notebook", vietnamese: "sổ tay", emoji: "📓" },
+                { english: "sharpener", vietnamese: "gọt bút chì", emoji: "🔪" },
+                { english: "board", vietnamese: "bảng", emoji: "칠판" },
+                { english: "chalk", vietnamese: "phấn", emoji: "📝" },
+                { english: "desk", vietnamese: "bàn học", emoji: "🪑" },
+                { english: "chair", vietnamese: "ghế", emoji: "🪑" },
+                { english: "crayon", vietnamese: "bút sáp", emoji: "🖍️" },
+                { english: "glue", vietnamese: "keo dán", emoji: "🧴" },
+                { english: "scissors", vietnamese: "kéo", emoji: "✂️" }
+            ]
+        };
+
+        const allWords = [].concat(
+            wordCategories.colors,
+            wordCategories.numbers,
+            wordCategories.animals,
+            wordCategories.schoolSupplies
+        );
+        
+        // Lấy các phần tử DOM cần thiết
+        const gameContainer = document.querySelector('.game-container');
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const progressDisplay = document.getElementById('progress-display');
+        const currentWordDisplay = document.getElementById('current-word');
+        const correctCharDisplay = document.getElementById('correct-char-display');
+        const mainMenu = document.getElementById('main-menu');
+        const endGameMessage = document.getElementById('end-game-message');
+        const wordInfo = document.getElementById('word-info');
+        const wordEmoji = document.getElementById('word-emoji');
+        const wordVietnamese = document.getElementById('word-vietnamese');
+        
+        // Các biến trạng thái của game
+        let currentWordChars = [];
+        let wordIndex = 0;
+        let score = 0;
+        let fallingChars = [];
+        let isGameRunning = false;
+        let fireworkCount = 0;
+        let animationFrames = [];
+        let currentWordDataIndex = 0;
+        let nextWordTimeoutId = null;
+        let spellingTimeoutId = null;
+
+        /**
+         * Hàm xáo trộn mảng ngẫu nhiên (Fisher-Yates shuffle)
+         * @param {Array} array - Mảng cần xáo trộn.
+         */
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+        
+        /**
+         * Tạo một chữ cái rơi từ trên xuống, di chuyển ngang theo thứ tự.
+         * @param {string} char - Ký tự sẽ được tạo.
+         */
+        function createFallingChar(char) {
+            const charElement = document.createElement('div');
+            charElement.classList.add('falling-char');
+            charElement.textContent = char;
+            
+            // Đặt vị trí ngẫu nhiên trên màn hình
+            const randomX = Math.random() * (gameContainer.offsetWidth - 50);
+            const randomY = Math.random() * (gameContainer.offsetHeight - 50);
+            
+            charElement.style.left = `${randomX}px`;
+            charElement.style.top = `${randomY}px`;
+            
+            charElement.addEventListener('click', () => handleKeyPress({ key: char }));
+            
+            gameContainer.appendChild(charElement);
+            fallingChars.push({ element: charElement, char: char });
+            
+            // Thêm hiệu ứng di chuyển ngẫu nhiên
+            animateRandomMovement(charElement);
+        }
+
+        /**
+         * Hàm tạo hiệu ứng di chuyển ngẫu nhiên cho chữ cái.
+         * @param {HTMLElement} element - Phần tử chữ cái cần di chuyển.
+         */
+        function animateRandomMovement(element) {
+            if (!isGameRunning) {
+                return;
+            }
+
+            const duration = 2000 + Math.random() * 3000;
+            const newX = Math.random() * (gameContainer.offsetWidth - 50);
+            const newY = Math.random() * (gameContainer.offsetHeight - 50);
+
+            element.style.transition = `top ${duration}ms ease-in-out, left ${duration}ms ease-in-out`;
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+
+            setTimeout(() => {
+                animateRandomMovement(element);
+            }, duration);
+        }
+
+        /**
+         * Sử dụng Web Speech API để đọc từ.
+         * @param {string} text - Văn bản cần đọc.
+         */
+        function playWordAudio(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+        }
+        
+        /**
+         * Đánh vần từng chữ cái của từ.
+         * @param {string} word - Từ cần đánh vần.
+         * @param {function} callback - Hàm callback được gọi sau khi đánh vần xong.
+         */
+        function spellWord(word, callback) {
+            const letters = word.split('');
+            let delay = 0;
+            const lettersToSpell = letters.filter(char => char !== ' ');
+            
+            lettersToSpell.forEach((letter, index) => {
+                spellingTimeoutId = setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance(letter);
+                    utterance.lang = 'en-US';
+                    speechSynthesis.speak(utterance);
+                    if (index === lettersToSpell.length - 1) {
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                }, delay);
+                delay += 500; // Thời gian chờ giữa các chữ cái
+            });
+
+            if (lettersToSpell.length === 0 && callback) {
+                callback();
+            }
+        }
+
+        /**
+         * Bắt đầu trò chơi.
+         */
+        function startGame() {
+            if (isGameRunning) return;
+            isGameRunning = true;
+            mainMenu.style.display = 'none';
+            endGameMessage.style.display = 'none';
+            score = 0;
+            currentWordDataIndex = 0;
+            updateScoreDisplay();
+            startNewWord();
+            startBtn.style.display = 'none';
+            resetBtn.style.display = 'block';
+        }
+
+        /**
+         * Bắt đầu một từ mới.
+         */
+        function startNewWord() {
+            if (!isGameRunning) {
+                return;
+            }
+            
+            wordIndex = 0;
+            
+            if (currentWordDataIndex >= allWords.length) {
+                endGame();
+                return;
+            }
+            
+            const currentWordData = allWords[currentWordDataIndex];
+            currentWordChars = currentWordData.english.toUpperCase().split('');
+            const charsToCreate = currentWordChars.filter(char => char !== ' ');
+
+            currentWordDisplay.textContent = currentWordData.english;
+            wordEmoji.textContent = currentWordData.emoji;
+            wordVietnamese.textContent = currentWordData.vietnamese;
+            wordInfo.style.opacity = 1;
+
+            correctCharDisplay.textContent = '';
+            
+            cancelAnimations();
+            gameContainer.querySelectorAll('.falling-char').forEach(char => char.remove());
+            fallingChars = [];
+
+            // Đọc từ và đánh vần khi bắt đầu
+            playWordAudio(currentWordData.english);
+
+            setTimeout(() => {
+                spellWord(currentWordData.english, () => {
+                    charsToCreate.forEach(char => {
+                        createFallingChar(char);
+                    });
+                });
+            }, 2000); // Đợi 2 giây sau khi đọc từ xong mới bắt đầu đánh vần
+            
+            updateProgressDisplay();
+        }
+
+        /**
+         * Xử lý sự kiện khi người chơi bấm phím hoặc chạm vào chữ cái.
+         * @param {object} e - Sự kiện.
+         */
+        function handleKeyPress(e) {
+            if (!isGameRunning || wordIndex >= currentWordChars.length) {
+                return;
+            }
+
+            while (currentWordChars[wordIndex] === ' ' && wordIndex < currentWordChars.length) {
+                correctCharDisplay.textContent += ' ';
+                wordIndex++;
+            }
+
+            if (wordIndex >= currentWordChars.length) {
+                completeWord();
+                return;
+            }
+
+            const keyPressed = e.key.toUpperCase();
+            const targetChar = currentWordChars[wordIndex].toUpperCase();
+
+            if (keyPressed === targetChar) {
+                const charToFind = fallingChars.find(c => c.char.toUpperCase() === targetChar);
+                
+                if (charToFind) {
+                    charToFind.element.remove();
+                    fallingChars = fallingChars.filter(c => c !== charToFind);
+                    
+                    playWordAudio(targetChar); // Đọc ký tự vừa gõ đúng
+
+                    correctCharDisplay.textContent += currentWordChars[wordIndex];
+                    wordIndex++;
+                    
+                    while (currentWordChars[wordIndex] === ' ' && wordIndex < currentWordChars.length) {
+                        correctCharDisplay.textContent += ' ';
+                        wordIndex++;
+                    }
+
+                    if (wordIndex >= currentWordChars.length) {
+                        completeWord();
+                    }
+                }
+            }
+        }
+
+        /**
+         * Xử lý khi người chơi hoàn thành một từ.
+         */
+        function completeWord() {
+            score++;
+            currentWordDataIndex++;
+            updateScoreDisplay();
+            
+            isGameRunning = false;
+            
+            const currentWordData = allWords[currentWordDataIndex - 1]; // Lấy từ vừa hoàn thành
+            playWordAudio(currentWordData.english); // Đọc lại từ đó
+
+            nextWordTimeoutId = setTimeout(() => {
+                isGameRunning = true;
+                startNewWord();
+            }, 4000);
+        }
+        
+        /**
+         * Xử lý khi người chơi hoàn thành tất cả các từ.
+         */
+        function endGame() {
+            isGameRunning = false;
+            currentWordDisplay.textContent = 'Trò chơi kết thúc!';
+            correctCharDisplay.textContent = '';
+            wordInfo.style.opacity = 0;
+            playFireworks();
+            endGameMessage.style.display = 'block';
+        }
+
+        /**
+         * Cập nhật số từ hoàn thành trên màn hình.
+         */
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = `Từ hoàn thành: ${score}`;
+            updateProgressDisplay();
+        }
+        
+        /**
+         * Cập nhật tiến độ trên màn hình.
+         */
+        function updateProgressDisplay() {
+            progressDisplay.textContent = `Tiến độ: ${currentWordDataIndex} / ${allWords.length}`;
+        }
+        
+        /**
+         * Bắt đầu hiệu ứng pháo hoa.
+         */
+        function playFireworks() {
+            fireworkCount = 0;
+            triggerFireworkBurst();
+        }
+
+        /**
+         * Kích hoạt một đợt pháo hoa.
+         */
+        function triggerFireworkBurst() {
+            if (fireworkCount >= 3) return;
+            fireworkCount++;
+            for (let i = 0; i < 50; i++) {
+                createFirework();
+            }
+            setTimeout(triggerFireworkBurst, 1000);
+        }
+
+        /**
+         * Tạo một hạt pháo hoa đơn lẻ.
+         */
+        function createFirework() {
+            const firework = document.createElement('div');
+            firework.classList.add('firework');
+            const x = Math.random() * gameContainer.offsetWidth;
+            const y = Math.random() * gameContainer.offsetHeight;
+            firework.style.left = `${x}px`;
+            firework.style.top = `${y}px`;
+            gameContainer.appendChild(firework);
+
+            const size = Math.random() * 10 + 5;
+            firework.style.width = `${size}px`;
+            firework.style.height = `${size}px`;
+            firework.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            
+            firework.animate([
+                { transform: 'scale(0)', opacity: 1 },
+                { transform: 'scale(1.5)', opacity: 0 }
+            ], {
+                duration: 1000,
+                easing: 'ease-out'
+            }).onfinish = () => firework.remove();
+        }
+
+        /**
+         * Hủy tất cả các animation frame đang chạy
+         */
+        function cancelAnimations() {
+            animationFrames.forEach(frame => cancelAnimationFrame(frame));
+            animationFrames = [];
+        }
+
+        /**
+         * Đặt lại trò chơi về trạng thái ban đầu.
+         */
+        function resetGame() {
+            isGameRunning = false;
+            score = 0;
+            updateScoreDisplay();
+            currentWordDataIndex = 0; // Đặt lại chỉ số từ vựng
+            updateProgressDisplay();
+            currentWordDisplay.textContent = 'Sẵn sàng!';
+            correctCharDisplay.textContent = '';
+            wordInfo.style.opacity = 0;
+            
+            // Dừng tất cả các hoạt động âm thanh và hoạt ảnh
+            if (nextWordTimeoutId) {
+                clearTimeout(nextWordTimeoutId);
+            }
+            if (spellingTimeoutId) {
+                clearTimeout(spellingTimeoutId);
+            }
+            speechSynthesis.cancel();
+            
+            mainMenu.style.display = 'flex';
+            endGameMessage.style.display = 'none';
+            startBtn.style.display = 'block';
+            resetBtn.style.display = 'none';
+            
+            cancelAnimations();
+            gameContainer.querySelectorAll('.falling-char').forEach(char => char.remove());
+            fallingChars = [];
+            
+            document.querySelectorAll('.firework').forEach(fw => fw.remove());
+        }
+        
+        // Gắn sự kiện click cho các nút
+        startBtn.addEventListener('click', startGame);
+        resetBtn.addEventListener('click', resetGame);
+
+        // Khởi tạo game khi load trang
+        resetGame();
+
+        // Cập nhật kích thước game khi cửa sổ thay đổi
+        window.addEventListener('resize', () => {
+            const containerWidth = window.innerWidth * 0.9;
+            const containerHeight = Math.min(600, window.innerHeight * 0.8);
+            gameContainer.style.width = `${containerWidth}px`;
+            gameContainer.style.height = `${containerHeight}px`;
+        });
+    </script>
+</body>
+</html>
